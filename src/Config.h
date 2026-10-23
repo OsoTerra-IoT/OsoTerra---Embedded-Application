@@ -5,10 +5,11 @@
 #define DEVICE_CODE "OS-014"
 #define DEVICE_API_KEY "os-014-device-key"
 
-// Wokwi-GUEST is the simulator's open network; in the field use the plot's Wi-Fi.
+// Wokwi-GUEST is the simulator's open network; in the field use the plot's 2.4 GHz Wi-Fi.
 #define WIFI_SSID "Wokwi-GUEST"
 #define WIFI_PASSWORD ""
-#define WIFI_CHANNEL 6
+// 0 scans every channel, so it works with any router and in Wokwi (6 only skips the scan in the simulator).
+#define WIFI_CHANNEL 0
 
 // Edge Service on the local gateway. In Wokwi, host.wokwi.internal reaches the PC running the simulation.
 #define EDGE_SERVICE_URL "http://host.wokwi.internal:5000/api/v1/soil-readings"
