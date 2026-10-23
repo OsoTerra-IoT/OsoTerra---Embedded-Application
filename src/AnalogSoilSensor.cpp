@@ -3,8 +3,9 @@
 
 const Event AnalogSoilSensor::READING_TAKEN_EVENT = Event(READING_TAKEN_EVENT_ID);
 
-AnalogSoilSensor::AnalogSoilSensor(int pin, float maxValue, int samples, EventHandler *eventHandler)
-    : Sensor(pin, eventHandler), maxValue(maxValue), samples(samples) {}
+AnalogSoilSensor::AnalogSoilSensor(int pin, float maxValue, int rawAtZero, int rawAtMax, int samples,
+                                   EventHandler *eventHandler)
+    : Sensor(pin, eventHandler), maxValue(maxValue), rawAtZero(rawAtZero), rawAtMax(rawAtMax), samples(samples) {}
 
 float AnalogSoilSensor::read() {
   long total = 0;
@@ -12,7 +13,9 @@ float AnalogSoilSensor::read() {
     total += analogRead(pin);
     delay(2);
   }
-  float value = (total / (float)samples) / 4095.0f * maxValue;
+  lastRaw = total / samples;
+  float value = (lastRaw - rawAtZero) / (float)(rawAtMax - rawAtZero) * maxValue;
+  value = constrain(value, 0.0f, maxValue);
   on(READING_TAKEN_EVENT);
   return value;
 }

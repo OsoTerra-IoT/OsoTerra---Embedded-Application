@@ -9,7 +9,7 @@ ESP32 DevKit C v4 · C++ (Arduino framework) · PlatformIO · OneWire + DallasTe
 | Part | Pin | Note |
 |---|---|---|
 | EC probe | GPIO 34 (ADC) | Simulated with a potentiometer in Wokwi, 0–5 dS/m |
-| Capacitive moisture sensor | GPIO 35 (ADC) | Simulated with a potentiometer in Wokwi, 0–100 % |
+| Capacitive moisture sensor | GPIO 35 (ADC) | Calibrated between `MOISTURE_RAW_DRY` and `MOISTURE_RAW_WET` (inverse sensor); a potentiometer in Wokwi |
 | DS18B20 soil temperature | GPIO 4 | 4.7 kΩ pull-up |
 | RGB LED (common cathode) | GPIO 25 / 26 / 27 | 220 Ω per channel |
 | Push button | GPIO 14 | `INPUT_PULLUP` |
@@ -20,7 +20,7 @@ The firmware follows the course's ModestIoT style: sensors notify the device wit
 | Class | Kind | Responsibility |
 |---|---|---|
 | `Event`, `Command`, `EventHandler`, `CommandHandler`, `Sensor`, `Actuator`, `Device`, `Led`, `Button` | Framework | ModestIoT base classes. |
-| `AnalogSoilSensor` | Sensor | EC probe and moisture sensor: averages 8 ADC samples and scales them. |
+| `AnalogSoilSensor` | Sensor | EC probe and moisture sensor: averages 8 ADC samples and scales them between two calibration points (inverse sensors allowed). |
 | `SoilTemperatureSensor` | Sensor | DS18B20; emits `PROBE_DISCONNECTED_EVENT` and returns `NAN` when it does not answer. |
 | `StatusLight` | Actuator | RGB LED made of three framework `Led`s; one command per pattern of the IoT style guide. |
 | `EdgeServiceClient` | Support | `POST /api/v1/soil-readings` with `X-API-Key`; reads `compensatedConductivityDsM` and `status`. |
@@ -43,6 +43,10 @@ The firmware follows the course's ModestIoT style: sensors notify the device wit
 
 ## Configuration
 Edit `src/Config.h`: `DEVICE_CODE`, `DEVICE_API_KEY` (must match `EDGE_DEVICES` in the Edge Service), Wi-Fi, `EDGE_SERVICE_URL`, `SAMPLE_INTERVAL_MS` and `CROP_THRESHOLD_DSM`.
+
+### Real board
+- `WIFI_CHANNEL 0` scans every channel; the ESP32 only joins 2.4 GHz networks.
+- **Moisture calibration:** each reading prints `Raw ADC: conductivity …, moisture …` on the serial monitor (115200). Note the moisture value with the sensor in dry air and in a glass of water up to its line, and set them as `MOISTURE_RAW_DRY` and `MOISTURE_RAW_WET` (defaults 3200 and 1300 are typical for the v1.2 sensor at 3.3 V).
 
 ## Build and simulate
 ```bash
