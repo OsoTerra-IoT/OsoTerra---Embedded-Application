@@ -1,10 +1,10 @@
 {
-  "name": "18650 Li-ion 3.7 V",
+  "name": "18650 + holder",
   "author": "Oso Terra",
   "pins": [
     "-",
+    "+",
     "",
-    "",
-    "+"
+    ""
   ]
 }

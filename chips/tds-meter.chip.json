@@ -1,9 +1,9 @@
 {
-  "name": "TDS Meter + EC probe",
+  "name": "TDS Meter V1.0",
   "author": "Oso Terra",
   "pins": [
-    "VCC",
-    "GND",
+    "+",
+    "-",
     "",
     "A"
   ],

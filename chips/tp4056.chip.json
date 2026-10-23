@@ -1,14 +1,14 @@
 {
-  "name": "TP4056 + DW01",
+  "name": "TP4056 USB-C + protection",
   "author": "Oso Terra",
   "pins": [
-    "IN+",
-    "IN-",
-    "",
-    "",
+    "OUT+",
+    "OUT-",
     "B+",
     "B-",
-    "OUT-",
-    "OUT+"
+    "",
+    "",
+    "IN-",
+    "IN+"
   ]
 }

@@ -3,7 +3,7 @@ version = 1
 firmware = ".pio/build/esp32dev/firmware.bin"
 elf = ".pio/build/esp32dev/firmware.elf"
 
-# Custom parts: the sensors and the power chain that Wokwi does not ship (see chips/README.md).
+# Custom parts: the sensors, the 2-pin button and the power parts that Wokwi does not ship (see chips/README.md).
 
 [[chip]]
 name = "soil-moisture-v12"
@@ -14,17 +14,17 @@ name = "tds-meter"
 binary = "chips/tds-meter.chip.wasm"
 
 [[chip]]
-name = "solar-panel-6v"
-binary = "chips/solar-panel-6v.chip.wasm"
-
-[[chip]]
-name = "tp4056"
-binary = "chips/tp4056.chip.wasm"
+name = "push-button-2pin"
+binary = "chips/push-button-2pin.chip.wasm"
 
 [[chip]]
 name = "battery-18650"
 binary = "chips/battery-18650.chip.wasm"
 
 [[chip]]
-name = "ht7333"
-binary = "chips/ht7333.chip.wasm"
+name = "tp4056"
+binary = "chips/tp4056.chip.wasm"
+
+[[chip]]
+name = "solar-panel-6v"
+binary = "chips/solar-panel-6v.chip.wasm"
