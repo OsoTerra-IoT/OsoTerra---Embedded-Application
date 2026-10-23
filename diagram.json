@@ -1,0 +1,235 @@
+{
+  "version": 1,
+  "author": "Oso Terra",
+  "editor": "wokwi",
+  "parts": [
+    {
+      "type": "board-esp32-devkit-c-v4",
+      "id": "esp",
+      "top": 0,
+      "left": 0,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-potentiometer",
+      "id": "ec",
+      "top": -170,
+      "left": -240,
+      "attrs": {
+        "value": "620"
+      }
+    },
+    {
+      "type": "wokwi-potentiometer",
+      "id": "moist",
+      "top": -40,
+      "left": -240,
+      "attrs": {
+        "value": "480"
+      }
+    },
+    {
+      "type": "board-ds18b20",
+      "id": "temp",
+      "top": 40,
+      "left": 220,
+      "attrs": {
+        "temperature": "24.1"
+      }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r_pull",
+      "top": -10,
+      "left": 180,
+      "rotate": 0,
+      "attrs": {
+        "value": "4700"
+      }
+    },
+    {
+      "type": "wokwi-rgb-led",
+      "id": "led",
+      "top": 90,
+      "left": -150,
+      "attrs": {
+        "common": "cathode"
+      }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r_r",
+      "top": 120,
+      "left": -110,
+      "rotate": 0,
+      "attrs": {
+        "value": "220"
+      }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r_g",
+      "top": 135,
+      "left": -95,
+      "rotate": 0,
+      "attrs": {
+        "value": "220"
+      }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r_b",
+      "top": 150,
+      "left": -80,
+      "rotate": 0,
+      "attrs": {
+        "value": "220"
+      }
+    },
+    {
+      "type": "wokwi-pushbutton",
+      "id": "btn",
+      "top": 190,
+      "left": -170,
+      "attrs": {
+        "color": "green",
+        "label": "Botón"
+      }
+    }
+  ],
+  "connections": [
+    [
+      "esp:TX",
+      "$serialMonitor:RX",
+      "",
+      []
+    ],
+    [
+      "esp:RX",
+      "$serialMonitor:TX",
+      "",
+      []
+    ],
+    [
+      "ec:VCC",
+      "esp:3V3",
+      "red",
+      []
+    ],
+    [
+      "ec:GND",
+      "esp:GND.1",
+      "black",
+      []
+    ],
+    [
+      "ec:SIG",
+      "esp:34",
+      "orange",
+      []
+    ],
+    [
+      "moist:VCC",
+      "esp:3V3",
+      "red",
+      []
+    ],
+    [
+      "moist:GND",
+      "esp:GND.1",
+      "black",
+      []
+    ],
+    [
+      "moist:SIG",
+      "esp:35",
+      "blue",
+      []
+    ],
+    [
+      "temp:VCC",
+      "esp:3V3",
+      "red",
+      []
+    ],
+    [
+      "temp:GND",
+      "esp:GND.2",
+      "black",
+      []
+    ],
+    [
+      "temp:DQ",
+      "esp:4",
+      "green",
+      []
+    ],
+    [
+      "r_pull:1",
+      "esp:3V3",
+      "red",
+      []
+    ],
+    [
+      "r_pull:2",
+      "temp:DQ",
+      "green",
+      []
+    ],
+    [
+      "led:R",
+      "r_r:1",
+      "red",
+      []
+    ],
+    [
+      "led:G",
+      "r_g:1",
+      "green",
+      []
+    ],
+    [
+      "led:B",
+      "r_b:1",
+      "blue",
+      []
+    ],
+    [
+      "r_r:2",
+      "esp:25",
+      "red",
+      []
+    ],
+    [
+      "r_g:2",
+      "esp:26",
+      "green",
+      []
+    ],
+    [
+      "r_b:2",
+      "esp:27",
+      "blue",
+      []
+    ],
+    [
+      "led:COM",
+      "esp:GND.1",
+      "black",
+      []
+    ],
+    [
+      "btn:1.l",
+      "esp:14",
+      "purple",
+      []
+    ],
+    [
+      "btn:2.l",
+      "esp:GND.1",
+      "black",
+      []
+    ]
+  ],
+  "dependencies": {}
+}
