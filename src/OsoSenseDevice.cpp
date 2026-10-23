@@ -7,7 +7,7 @@ const Command OsoSenseDevice::START_PAIRING_COMMAND = Command(START_PAIRING_COMM
 
 OsoSenseDevice::OsoSenseDevice(EdgeServiceClient edgeClient, float cropThresholdDsM, unsigned long sampleIntervalMs)
     : conductivityProbe(CONDUCTIVITY_PIN, CONDUCTIVITY_MAX_DSM),
-      moistureSensor(MOISTURE_PIN, MOISTURE_MAX_PERCENT),
+      moistureSensor(MOISTURE_PIN, MOISTURE_MAX_PERCENT, MOISTURE_RAW_DRY, MOISTURE_RAW_WET),
       temperatureSensor(TEMPERATURE_PIN),
       button(BUTTON_PIN),
       statusLight(LED_RED_PIN, LED_GREEN_PIN, LED_BLUE_PIN),
@@ -67,6 +67,7 @@ void OsoSenseDevice::handle(Command command) {
 SoilReading OsoSenseDevice::takeReading() {
   float conductivity = conductivityProbe.read();
   float moisture = moistureSensor.read();
+  Serial.printf("Raw ADC: conductivity %d, moisture %d\n", conductivityProbe.raw(), moistureSensor.raw());
   return SoilReading{conductivity, moisture, temperatureSensor.read()};
 }
 
