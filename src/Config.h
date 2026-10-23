@@ -27,7 +27,8 @@
 #define BUTTON_PIN 14
 
 // Probe ranges: the ADC (0-4095) is mapped to these values.
-#define CONDUCTIVITY_MAX_DSM 5.0f
+// Generic TDS / EC module (0-2.3 V output) on the 1:2 soil-water extract: 3.3 V would be 3.2 dS/m.
+#define CONDUCTIVITY_MAX_DSM 3.2f
 #define MOISTURE_MAX_PERCENT 100.0f
 
 // Moisture calibration: raw ADC of the capacitive sensor in dry air (0 %) and in water up to its line (100 %).

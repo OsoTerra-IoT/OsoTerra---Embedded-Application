@@ -3,16 +3,21 @@
 Firmware of the **OsoSense** field device (Oso Terra, 1ASI0572 Desarrollo de Soluciones IoT, UPC 202620). The ESP32 measures soil electrical conductivity, moisture and temperature, sends each reading to the [Edge Service](https://github.com/OsoTerra-IoT/OsoTerra---Edge-Service) and shows the salinity level of the plot with an RGB LED.
 
 ## Stack
-ESP32 DevKit C v4 · C++ (Arduino framework) · PlatformIO · OneWire + DallasTemperature · Wokwi
+ESP32 DevKit V1 (WROOM-32) · C++ (Arduino framework) · PlatformIO · OneWire + DallasTemperature · Wokwi
 
 ## Circuit (section 5.6 of the report)
+The Wokwi circuit (`diagram.json`) uses the parts bought for the prototype on an 830-point breadboard. Every wire joins two points; the nets meet in the breadboard strips and rails. Wokwi does not ship the sensors or the power parts, so they are custom chips (see [chips/README.md](https://github.com/OsoTerra-IoT/OsoTerra---Embedded-Application/blob/develop/chips/README.md)).
+
 | Part | Pin | Note |
 |---|---|---|
-| EC probe | GPIO 34 (ADC) | Simulated with a potentiometer in Wokwi, 0–5 dS/m |
-| Capacitive moisture sensor | GPIO 35 (ADC) | Calibrated between `MOISTURE_RAW_DRY` and `MOISTURE_RAW_WET` (inverse sensor); a potentiometer in Wokwi |
-| DS18B20 soil temperature | GPIO 4 | 4.7 kΩ pull-up |
+| TDS Meter V1.0 with its probe | GPIO 34 (ADC) | 0–2.3 V, read on the 1:2 soil-water extract; 3.3 V = `CONDUCTIVITY_MAX_DSM` (3.2 dS/m) |
+| Capacitive Soil Moisture Sensor v2.0 | GPIO 35 (ADC) | Calibrated between `MOISTURE_RAW_DRY` and `MOISTURE_RAW_WET` (inverse sensor) |
+| DS18B20 waterproof probe | GPIO 4 | 4.7 kΩ pull-up to 3.3 V |
 | RGB LED (common cathode) | GPIO 25 / 26 / 27 | 220 Ω per channel |
-| Push button | GPIO 14 | `INPUT_PULLUP` |
+| 2-pin push button | GPIO 14 | `INPUT_PULLUP`, to GND |
+| Power | VIN / GND | 6 V solar panel → TP4056 with protection (USB-C) charging the 18650 → OUT+/OUT− to VIN/GND; the board's regulator gives 3.3 V to the rails |
+
+All the sensors run on 3.3 V from the rails, never 5 V: the ESP32 inputs are 3.3 V. On VIN the 18650 (3.0–4.2 V) is close to the dropout of the board's regulator, so below about 3.8 V the 3.3 V line sags; a low-dropout regulator such as the HT7333 between OUT+ and 3V3 fixes it.
 
 ## Design (ModestIoT)
 The firmware follows the course's ModestIoT style: sensors notify the device with **events** (`on`) and the device gives **commands** to its actuators (`handle`).
@@ -52,4 +57,4 @@ Edit `src/Config.h`: `DEVICE_CODE`, `DEVICE_API_KEY` (must match `EDGE_DEVICES` 
 ```bash
 pio run
 ```
-Then open the project with the Wokwi extension for VS Code (`wokwi.toml` points to the firmware and `diagram.json` is the circuit). Run the Edge Service on port 5000 of the same PC: the simulator reaches it at `host.wokwi.internal`.
+Then open the project with the Wokwi extension for VS Code (`wokwi.toml` points to the firmware, the custom chips and `diagram.json`). Move the sliders of the moisture and TDS chips and the DS18B20 temperature to change the readings. Run the Edge Service on port 5000 of the same PC: the simulator reaches it at `host.wokwi.internal`.

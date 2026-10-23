@@ -1,0 +1,8 @@
+{
+  "name": "Solar panel 6 V 100x60",
+  "author": "Oso Terra",
+  "pins": [
+    "+",
+    "-"
+  ]
+}
