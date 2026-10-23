@@ -1,0 +1,10 @@
+{
+  "name": "HT7333 3.3 V LDO",
+  "author": "Oso Terra",
+  "pins": [
+    "VIN",
+    "GND",
+    "",
+    "VOUT"
+  ]
+}

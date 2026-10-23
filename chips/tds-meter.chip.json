@@ -1,0 +1,20 @@
+{
+  "name": "TDS Meter + EC probe",
+  "author": "Oso Terra",
+  "pins": [
+    "VCC",
+    "GND",
+    "",
+    "A"
+  ],
+  "controls": [
+    {
+      "id": "conductivity",
+      "label": "Conductividad del extracto 1:2 (dS/m)",
+      "type": "range",
+      "min": 0,
+      "max": 2.2,
+      "step": 0.05
+    }
+  ]
+}

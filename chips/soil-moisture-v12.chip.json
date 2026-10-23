@@ -1,0 +1,20 @@
+{
+  "name": "Soil Moisture v1.2",
+  "author": "Oso Terra",
+  "pins": [
+    "VCC",
+    "GND",
+    "",
+    "AOUT"
+  ],
+  "controls": [
+    {
+      "id": "moisture",
+      "label": "Humedad del suelo (%)",
+      "type": "range",
+      "min": 0,
+      "max": 100,
+      "step": 1
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "name": "TP4056 + DW01",
+  "author": "Oso Terra",
+  "pins": [
+    "IN+",
+    "IN-",
+    "",
+    "",
+    "B+",
+    "B-",
+    "OUT-",
+    "OUT+"
+  ]
+}

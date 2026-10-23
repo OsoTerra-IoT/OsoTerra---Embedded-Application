@@ -1,0 +1,10 @@
+{
+  "name": "18650 Li-ion 3.7 V",
+  "author": "Oso Terra",
+  "pins": [
+    "-",
+    "",
+    "",
+    "+"
+  ]
+}
