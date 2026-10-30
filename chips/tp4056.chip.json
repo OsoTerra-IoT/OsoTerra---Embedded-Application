@@ -2,13 +2,13 @@
   "name": "TP4056 USB-C + protection",
   "author": "Oso Terra",
   "pins": [
-    "OUT+",
-    "OUT-",
-    "B+",
-    "B-",
-    "",
-    "",
+    "IN+",
     "IN-",
-    "IN+"
+    "",
+    "",
+    "OUT-",
+    "B-",
+    "B+",
+    "OUT+"
   ]
 }
