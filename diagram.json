@@ -112,6 +112,32 @@
       "top": -120,
       "left": 110,
       "attrs": {}
+    },
+    {
+      "type": "wokwi-relay-module",
+      "id": "relay",
+      "top": 260,
+      "left": 60,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r_pump",
+      "top": 293,
+      "left": 215,
+      "attrs": {
+        "value": "220"
+      }
+    },
+    {
+      "type": "wokwi-led",
+      "id": "pump",
+      "top": 274,
+      "left": 300,
+      "attrs": {
+        "color": "blue",
+        "label": "Bomba"
+      }
     }
   ],
   "connections": [
@@ -428,6 +454,85 @@
         "h453.41",
         "v172.24",
         "h32.8"
+      ]
+    ],
+    [
+      "relay:VCC",
+      "bb1:bp.41",
+      "red",
+      [
+        "h-15",
+        "v-63",
+        "h452.2",
+        "v-24.7",
+        "h9.6",
+        "v-5.0"
+      ]
+    ],
+    [
+      "relay:GND",
+      "bb1:bn.35",
+      "black",
+      [
+        "h-22",
+        "v-61",
+        "h401.6",
+        "v-36.7",
+        "h-9.6",
+        "v5.0"
+      ]
+    ],
+    [
+      "relay:IN",
+      "esp:D13",
+      "orange",
+      [
+        "h-29",
+        "v46.5",
+        "h633",
+        "v-207.38",
+        "h40.8"
+      ]
+    ],
+    [
+      "relay:COM",
+      "relay:VCC",
+      "red",
+      [
+        "h12",
+        "v-37",
+        "h-140",
+        "v27",
+        "h15"
+      ]
+    ],
+    [
+      "relay:NO",
+      "r_pump:1",
+      "yellow",
+      [
+        "h42",
+        "v0.15"
+      ]
+    ],
+    [
+      "r_pump:2",
+      "pump:A",
+      "yellow",
+      [
+        "h51.7",
+        "v17.35"
+      ]
+    ],
+    [
+      "pump:C",
+      "relay:GND",
+      "black",
+      [
+        "v9",
+        "h-277.8",
+        "v-36",
+        "h22"
       ]
     ]
   ],

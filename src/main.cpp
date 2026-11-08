@@ -21,11 +21,17 @@ void connectWifi() {
 void setup() {
   Serial.begin(115200);
   device.begin();
+#if !OFFLINE_MODE
   connectWifi();
+#else
+  Serial.println("Offline mode: no Wi-Fi, readings only");
+#endif
 }
 
 void loop() {
+#if !OFFLINE_MODE
   if (WiFi.status() != WL_CONNECTED) WiFi.reconnect();
+#endif
   device.update();
   delay(10);
 }

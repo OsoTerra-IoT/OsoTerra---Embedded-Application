@@ -15,6 +15,7 @@ The Wokwi circuit (`diagram.json`) uses the parts bought for the prototype on an
 | DS18B20 waterproof probe | GPIO 4 | 4.7 kΩ pull-up to 3.3 V |
 | RGB LED (common cathode) | GPIO 25 / 26 / 27 | 220 Ω per channel |
 | 2-pin push button | GPIO 14 | `INPUT_PULLUP`, to GND |
+| 1-channel relay module + mini water pump (contingency) | GPIO 13 | Relay IN to D13, VCC to 5 V (VIN with USB), GND to GND. The pump has its own 2 × AA pack on COM / NO, so the ESP32 never powers it. In Wokwi a blue LED stands for the pump |
 | Power | VIN / GND | 6 V solar panel → TP4056 with protection (USB-C) charging the 18650 → OUT+/OUT− to VIN/GND; the board's regulator gives 3.3 V to the rails |
 
 All the sensors run on 3.3 V from the rails, never 5 V: the ESP32 inputs are 3.3 V. On VIN the 18650 (3.0–4.2 V) is close to the dropout of the board's regulator, so below about 3.8 V the 3.3 V line sags; a low-dropout regulator such as the HT7333 between OUT+ and 3V3 fixes it.
@@ -28,6 +29,8 @@ The firmware follows the course's ModestIoT style: sensors notify the device wit
 | `AnalogSoilSensor` | Sensor | EC probe and moisture sensor: averages 8 ADC samples and scales them between two calibration points (inverse sensors allowed). |
 | `SoilTemperatureSensor` | Sensor | DS18B20; emits `PROBE_DISCONNECTED_EVENT` and returns `NAN` when it does not answer. |
 | `StatusLight` | Actuator | RGB LED made of three framework `Led`s; one command per pattern of the IoT style guide. |
+| `FlushPump` | Actuator | Relay + mini pump of the contingency. `START_FLUSH` / `STOP_FLUSH` commands; it stops by itself after `FLUSH_DURATION_MS`. |
+| `FlushPolicy` | Support | Pure logic (no hardware) that decides when a wash may start. |
 | `EdgeServiceClient` | Support | `POST /api/v1/soil-readings` with `X-API-Key`; reads `compensatedConductivityDsM` and `status`. |
 | `OsoSenseDevice` | Device | Sampling cycle, button events and salinity level. |
 
@@ -46,8 +49,24 @@ The firmware follows the course's ModestIoT style: sensors notify the device wit
 | — | Edge not reachable | white, long blink |
 | — | Rejected by the Edge (4xx) | magenta, fast blinks |
 
+## Contingency: washing the soil when the salinity stays Critical
+If the EC reaches **Critical** (≥ 1.5 × the crop threshold) the prototype does not only warn: it lowers the salinity with parts that cost a few soles. A relay switches a mini pump that sends fresh water from a bottle to the pot (leaching). `FlushPolicy` keeps it safe:
+
+| Rule | Value in `Config.h` | Why |
+|---|---|---|
+| Critical in a row before the first wash | `FLUSH_CONFIRM_READINGS` = 2 | One noisy reading does not start the pump |
+| Pump time per wash | `FLUSH_DURATION_MS` (60 s in the field, 8 s in Wokwi) | Fixed dose; `FlushPump` also stops itself |
+| Wait between washes | `FLUSH_COOLDOWN_MS` (30 min in the field, 20 s in Wokwi) | The water drains and the next reading is real |
+| Washes before asking for a person | `FLUSH_MAX_CYCLES` = 3 | The water itself may be salty or the substrate bad |
+| No wash if the soil is wetter than | `FLUSH_SATURATED_PERCENT` = 90 % | Avoids waterlogging |
+| Back to Normal | — | The wash counter restarts |
+
+It works with or without the Edge Service (it uses the raw EC when the Edge does not answer) and without the relay connected it only logs the decision. Serial log: `Contingency: EC 2.00 dS/m is Critical -> wash 1/3, pump on for 8 s`. The LED blinks cyan twice when the pump starts. Set `CONTINGENCY_ENABLED 0` to turn it off and `PUMP_RELAY_ACTIVE_LOW` to match the relay module (most blue modules are active-low; Wokwi's is active-high).
+
+`variants/diagram.sin-contingencia.json` is the previous circuit (without the relay) and `libraries.txt` lists the libraries wokwi.com needs.
+
 ## Configuration
-Edit `src/Config.h`: `DEVICE_CODE`, `DEVICE_API_KEY` (must match `EDGE_DEVICES` in the Edge Service), Wi-Fi, `EDGE_SERVICE_URL`, `SAMPLE_INTERVAL_MS` and `CROP_THRESHOLD_DSM`.
+Edit `src/Config.h`: `DEVICE_CODE`, `DEVICE_API_KEY` (must match `EDGE_DEVICES` in the Edge Service), Wi-Fi, `EDGE_SERVICE_URL`, `SAMPLE_INTERVAL_MS`, `CROP_THRESHOLD_DSM` and the contingency values. `OFFLINE_MODE 1` is a bench test over USB (no Wi-Fi, no Edge, readings and contingency on the serial monitor).
 
 ### Real board
 - `WIFI_CHANNEL 0` scans every channel; the ESP32 only joins 2.4 GHz networks.

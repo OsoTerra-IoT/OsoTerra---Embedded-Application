@@ -35,6 +35,16 @@ void StatusLight::handle(Command command) {
     case SHOW_PAIRING_COMMAND_ID: blink(10, false, false, true, 100, 100); break; // blue, fast
     case SHOW_STARTUP_COMMAND_ID: blink(1, true, true, true); break;              // white, 1 blink
     case SHOW_ERROR_COMMAND_ID: blink(5, true, false, true, 80, 80); break;       // magenta, fast
+    case SHOW_FLUSHING_COMMAND_ID: blink(2, false, true, true, 200, 150); break;  // cyan, 2 blinks: the pump starts
   }
   Actuator::handle(command);
+}
+
+void StatusLight::flash(Command command) {
+  switch (command.id) {
+    case SHOW_NORMAL_COMMAND_ID: blink(1, false, true, false, 40, 10); break;   // green
+    case SHOW_WATCH_COMMAND_ID: blink(1, true, true, false, 40, 10); break;     // amber
+    case SHOW_WARNING_COMMAND_ID: blink(1, true, true, false, 40, 10); break;   // orange
+    case SHOW_CRITICAL_COMMAND_ID: blink(1, true, false, false, 40, 10); break; // red
+  }
 }

@@ -21,10 +21,13 @@ public:
   static const int SHOW_PAIRING_COMMAND_ID = 105;
   static const int SHOW_STARTUP_COMMAND_ID = 106;
   static const int SHOW_ERROR_COMMAND_ID = 107;
+  static const int SHOW_FLUSHING_COMMAND_ID = 108;
 
   StatusLight(int redPin, int greenPin, int bluePin, CommandHandler *commandHandler = nullptr);
   void begin();
   void handle(Command command) override;
+  // Short 40 ms flash in the color of a level command, for fast bench tests.
+  void flash(Command command);
 };
 
 #endif
