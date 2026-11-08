@@ -6,6 +6,8 @@
 #include "SoilTemperatureSensor.h"
 #include "Button.h"
 #include "StatusLight.h"
+#include "FlushPump.h"
+#include "FlushPolicy.h"
 #include "EdgeServiceClient.h"
 
 // OsoSense field device: samples the soil, sends the reading to the Edge Service and shows the salinity level.
@@ -15,6 +17,8 @@ class OsoSenseDevice : public Device {
   SoilTemperatureSensor temperatureSensor;
   Button button;
   StatusLight statusLight;
+  FlushPump pump;
+  FlushPolicy flushPolicy;
   EdgeServiceClient edgeClient;
   float cropThresholdDsM;
   unsigned long sampleIntervalMs;
@@ -23,6 +27,7 @@ class OsoSenseDevice : public Device {
 
   SoilReading takeReading();
   Command levelCommand(float conductivityDsM) const;
+  void applyContingency(float conductivityDsM, float moisturePercent);
 
 public:
   static const int TAKE_READING_COMMAND_ID = 200;

@@ -17,6 +17,9 @@
 // 15 min in the field; 10 s in the simulation.
 #define SAMPLE_INTERVAL_MS 10000UL
 
+// 1 = bench test over USB: no Wi-Fi and no Edge Service, only the readings on the serial monitor.
+#define OFFLINE_MODE 0
+
 // Pins of the OsoSense circuit (section 5.6 of the report).
 #define CONDUCTIVITY_PIN 34
 #define MOISTURE_PIN 35
@@ -25,6 +28,7 @@
 #define LED_GREEN_PIN 26
 #define LED_BLUE_PIN 27
 #define BUTTON_PIN 14
+#define PUMP_RELAY_PIN 13  // contingency: relay module that switches the mini water pump
 
 // Probe ranges: the ADC (0-4095) is mapped to these values.
 // Generic TDS / EC module (0-2.3 V output) on the 1:2 soil-water extract: 3.3 V would be 3.2 dS/m.
@@ -39,5 +43,21 @@
 
 // Salinity threshold of the plot's crop (avocado 1.1 dS/m); the platform assigns it when the sensor is linked.
 #define CROP_THRESHOLD_DSM 1.1f
+
+// Contingency: when the salinity stays Critical the device washes the soil with fresh water (pump on a relay).
+// 1 = enabled. Without the relay connected the device works the same and only logs the decision.
+#define CONTINGENCY_ENABLED 1
+// 1 for the usual blue 1-channel relay modules (they switch when IN goes LOW); 0 for active-high modules and Wokwi's.
+#define PUMP_RELAY_ACTIVE_LOW 0
+// Pump time per wash: 60 s in the field (about 150 ml through a 3 V mini pump); 8 s in the simulation.
+#define FLUSH_DURATION_MS 8000UL
+// Wait between washes so the water drains and the next reading is real: 30 min in the field; 20 s in the simulation.
+#define FLUSH_COOLDOWN_MS 20000UL
+// Critical readings in a row before the first wash (filters one noisy reading).
+#define FLUSH_CONFIRM_READINGS 2
+// Washes before giving up and asking for a person (the pot may be saturated or the water itself may be salty).
+#define FLUSH_MAX_CYCLES 3
+// Never wash a soil that is already this wet (%): it would waterlog the plant.
+#define FLUSH_SATURATED_PERCENT 90.0f
 
 #endif
