@@ -4,7 +4,7 @@
   "pins": [
     "VCC",
     "GND",
-    "",
+    "PUMP",
     "AOUT"
   ],
   "controls": [
