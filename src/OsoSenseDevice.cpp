@@ -53,6 +53,7 @@ void OsoSenseDevice::handle(Command command) {
     else Serial.printf("Humedad: %.1f %% | Conductividad: %.2f dS/m | Temp: %.1f C\n", reading.moisturePercent, reading.conductivityDsM, reading.temperatureCelsius);
     statusLight.flash(levelCommand(reading.conductivityDsM));
     applyContingency(reading.conductivityDsM, reading.moisturePercent);
+    Serial.printf("Pump: %s | cycles %d/%d\n", pumpStateName(), flushPolicy.getCycles(), flushPolicy.getMaxCycles());
     return;
 #endif
     Serial.println("Reading: " + edgeClient.toJson(reading));
@@ -101,7 +102,10 @@ Command OsoSenseDevice::levelCommand(float conductivityDsM) const {
 // the decision (when to wash, how often, when to stop) lives in FlushPolicy so it can be tested without hardware.
 void OsoSenseDevice::applyContingency(float conductivityDsM, float moisturePercent) {
 #if CONTINGENCY_ENABLED
-  switch (flushPolicy.evaluate(conductivityDsM, cropThresholdDsM, moisturePercent, millis())) {
+  // A reading taken while the pump runs (the bench samples every 100 ms) must not count as a new wash.
+  if (pump.isRunning()) return;
+  lastDecision = flushPolicy.evaluate(conductivityDsM, cropThresholdDsM, moisturePercent, millis());
+  switch (lastDecision) {
     case FlushPolicy::START:
       flushPolicy.flushStarted();
       Serial.printf("Contingency: EC %.2f dS/m is Critical -> wash %d/%d, pump on for %lu s\n", conductivityDsM,
@@ -115,4 +119,15 @@ void OsoSenseDevice::applyContingency(float conductivityDsM, float moisturePerce
     case FlushPolicy::NONE: break;
   }
 #endif
+}
+
+// Pump state for the bench panel: PUMPING, SOAKING (waiting for the water to mix), LOCKED (washes used up), SATURATED.
+const char *OsoSenseDevice::pumpStateName() const {
+  if (pump.isRunning()) return "PUMPING";
+  switch (lastDecision) {
+    case FlushPolicy::WAIT_COOLDOWN: return "SOAKING";
+    case FlushPolicy::MAX_CYCLES_REACHED: return "LOCKED";
+    case FlushPolicy::SOIL_SATURATED: return "SATURATED";
+    default: return "IDLE";
+  }
 }

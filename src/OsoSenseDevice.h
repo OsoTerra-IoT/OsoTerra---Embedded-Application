@@ -19,6 +19,7 @@ class OsoSenseDevice : public Device {
   StatusLight statusLight;
   FlushPump pump;
   FlushPolicy flushPolicy;
+  FlushPolicy::Decision lastDecision = FlushPolicy::NONE;
   EdgeServiceClient edgeClient;
   float cropThresholdDsM;
   unsigned long sampleIntervalMs;
@@ -28,6 +29,7 @@ class OsoSenseDevice : public Device {
   SoilReading takeReading();
   Command levelCommand(float conductivityDsM) const;
   void applyContingency(float conductivityDsM, float moisturePercent);
+  const char *pumpStateName() const;
 
 public:
   static const int TAKE_READING_COMMAND_ID = 200;

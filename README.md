@@ -15,7 +15,7 @@ The Wokwi circuit (`diagram.json`) uses the parts bought for the prototype on an
 | DS18B20 waterproof probe | GPIO 4 | 4.7 kΩ pull-up to 3.3 V |
 | RGB LED (common cathode) | GPIO 25 / 26 / 27 | 220 Ω per channel |
 | 2-pin push button | GPIO 14 | `INPUT_PULLUP`, to GND |
-| 1-channel relay module + mini water pump (contingency) | GPIO 13 | Relay IN to D13, VCC to 5 V (VIN with USB), GND to GND. The pump has its own 2 × AA pack on COM / NO, so the ESP32 never powers it. In Wokwi a blue LED stands for the pump |
+| 1-channel relay module + mini water pump (contingency) | GPIO 18 | Relay IN to D18, VCC to 5 V (VIN with USB), GND to GND. The pump has its own 2 × AA pack on COM / NO, so the ESP32 never powers it. In Wokwi a blue LED stands for the pump |
 | Power | VIN / GND | 6 V solar panel → TP4056 with protection (USB-C) charging the 18650 → OUT+/OUT− to VIN/GND; the board's regulator gives 3.3 V to the rails |
 
 All the sensors run on 3.3 V from the rails, never 5 V: the ESP32 inputs are 3.3 V. On VIN the 18650 (3.0–4.2 V) is close to the dropout of the board's regulator, so below about 3.8 V the 3.3 V line sags; a low-dropout regulator such as the HT7333 between OUT+ and 3V3 fixes it.
@@ -61,12 +61,18 @@ If the EC reaches **Critical** (≥ 1.5 × the crop threshold) the prototype doe
 | No wash if the soil is wetter than | `FLUSH_SATURATED_PERCENT` = 90 % | Avoids waterlogging |
 | Back to Normal | — | The wash counter restarts |
 
-It works with or without the Edge Service (it uses the raw EC when the Edge does not answer) and without the relay connected it only logs the decision. Serial log: `Contingency: EC 2.00 dS/m is Critical -> wash 1/3, pump on for 8 s`. The LED blinks cyan twice when the pump starts. Set `CONTINGENCY_ENABLED 0` to turn it off and `PUMP_RELAY_ACTIVE_LOW` to match the relay module (most blue modules are active-low; Wokwi's is active-high).
+It works with or without the Edge Service (it uses the raw EC when the Edge does not answer) and without the relay connected it only logs the decision. Serial log: `Contingency: EC 2.00 dS/m is Critical -> wash 1/3, pump on for 8 s`. The LED blinks cyan twice when the pump starts. Set `CONTINGENCY_ENABLED 0` to turn it off and `PUMP_RELAY_ACTIVE_LOW` to match the relay module (most blue modules are active-low; Wokwi's is active-high). With `PUMP_RELAY_ACTIVE_LOW 1` the pin floats to release the relay: a 5 V module still switches on with 3.3 V on IN, as the prototype showed.
 
 `variants/diagram.sin-contingencia.json` is the previous circuit (without the relay) and `libraries.txt` lists the libraries wokwi.com needs.
 
 ## Configuration
 Edit `src/Config.h`: `DEVICE_CODE`, `DEVICE_API_KEY` (must match `EDGE_DEVICES` in the Edge Service), Wi-Fi, `EDGE_SERVICE_URL`, `SAMPLE_INTERVAL_MS`, `CROP_THRESHOLD_DSM` and the contingency values. `OFFLINE_MODE 1` is a bench test over USB (no Wi-Fi, no Edge, readings and contingency on the serial monitor).
+
+### Bench demo on the real prototype
+```bash
+pio run -e bench -t upload
+```
+The `bench` environment sets `OFFLINE_MODE 1` and `PUMP_RELAY_ACTIVE_LOW 1`: it samples every 100 ms, uses the moisture calibration of the sensor mounted on the prototype, washes for 5 s with 30 s to mix and prints `Pump: IDLE | PUMPING | SOAKING | LOCKED | SATURATED | cycles n/3` on each reading.
 
 ### Real board
 - `WIFI_CHANNEL 0` scans every channel; the ESP32 only joins 2.4 GHz networks.
