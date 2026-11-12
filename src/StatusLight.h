@@ -2,6 +2,7 @@
 #define STATUS_LIGHT_H
 
 #include "Actuator.h"
+#include "Config.h"
 #include "Led.h"
 
 // RGB status LED built from three framework Leds. Each command plays a pattern of the IoT style guide (5.1.2).
@@ -10,7 +11,7 @@ class StatusLight : public Actuator {
   Led green;
   Led blue;
   void setColor(bool r, bool g, bool b);
-  void blink(int times, bool r, bool g, bool b, int onMs = 150, int offMs = 150);
+  void blink(int times, bool r, bool g, bool b, int onMs = STATUS_BLINK_MS, int offMs = STATUS_BLINK_MS);
 
 public:
   static const int SHOW_NORMAL_COMMAND_ID = 100;

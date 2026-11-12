@@ -11,11 +11,13 @@ OsoSenseDevice::OsoSenseDevice(EdgeServiceClient edgeClient, float cropThreshold
       temperatureSensor(TEMPERATURE_PIN),
       button(BUTTON_PIN),
       statusLight(LED_RED_PIN, LED_GREEN_PIN, LED_BLUE_PIN),
+      leachingPump(LEACHING_PUMP_PIN, cropThresholdDsM * LEACHING_CRITICAL_RATIO),
       edgeClient(edgeClient),
       cropThresholdDsM(cropThresholdDsM),
       sampleIntervalMs(sampleIntervalMs) {}
 
 void OsoSenseDevice::begin() {
+  leachingPump.begin();
   button.setHandler(this);
   button.begin();
   temperatureSensor.setHandler(this);
@@ -25,6 +27,7 @@ void OsoSenseDevice::begin() {
 }
 
 void OsoSenseDevice::update() {
+  leachingPump.update();
   button.update();
   if (firstSample || millis() - lastSampleAt >= sampleIntervalMs) handle(TAKE_READING_COMMAND);
 }
@@ -41,23 +44,29 @@ void OsoSenseDevice::handle(Command command) {
     firstSample = false;
     lastSampleAt = millis();
     SoilReading reading = takeReading();
+#if OFFLINE_MODE
+    reportOffline(reading);
+    return;
+#endif
     Serial.println("Reading: " + edgeClient.toJson(reading));
 
+    // The pump decides on the device even when the Edge is down; it uses the compensated EC whenever the Edge returns it.
+    float conductivity = reading.conductivityDsM;
     EdgeResponse response = edgeClient.send(reading);
     if (!response.reached()) {
       Serial.println("Edge Service not reachable");
       statusLight.handle(Command(StatusLight::SHOW_OFFLINE_COMMAND_ID));
-      return;
+    } else {
+      Serial.printf("Edge Service answered %d (%s)\n", response.httpStatus, response.status.c_str());
+      if (response.httpStatus >= 400) {
+        statusLight.handle(Command(StatusLight::SHOW_ERROR_COMMAND_ID));
+      } else {
+        // The level uses the EC compensated to 25 °C by the Edge; the raw value only if it could not compensate.
+        if (!isnan(response.compensatedConductivityDsM)) conductivity = response.compensatedConductivityDsM;
+        statusLight.handle(levelCommand(conductivity));
+      }
     }
-    Serial.printf("Edge Service answered %d (%s)\n", response.httpStatus, response.status.c_str());
-    if (response.httpStatus >= 400) {
-      statusLight.handle(Command(StatusLight::SHOW_ERROR_COMMAND_ID));
-      return;
-    }
-    // The level uses the EC compensated to 25 °C by the Edge; the raw value only if it could not compensate.
-    float conductivity = isnan(response.compensatedConductivityDsM) ? reading.conductivityDsM
-                                                                    : response.compensatedConductivityDsM;
-    statusLight.handle(levelCommand(conductivity));
+    runLeaching(conductivity, reading.moisturePercent);
   } else if (command == START_PAIRING_COMMAND) {
     Serial.printf("Pairing mode: register %s in the OsoSense app\n", DEVICE_CODE);
     statusLight.handle(Command(StatusLight::SHOW_PAIRING_COMMAND_ID));
@@ -69,6 +78,21 @@ SoilReading OsoSenseDevice::takeReading() {
   float moisture = moistureSensor.read();
   Serial.printf("Raw ADC: conductivity %d, moisture %d\n", conductivityProbe.raw(), moistureSensor.raw());
   return SoilReading{conductivity, moisture, temperatureSensor.read()};
+}
+
+// Bench demo: the reading stays on the device, which decides the LED level and the pump by itself.
+void OsoSenseDevice::reportOffline(const SoilReading &reading) {
+  Serial.printf("Humedad: %.1f %% | Conductividad: %.2f dS/m | Temp: ", reading.moisturePercent, reading.conductivityDsM);
+  if (reading.hasTemperature()) Serial.printf("%.1f C\n", reading.temperatureCelsius);
+  else Serial.println("--");
+  runLeaching(reading.conductivityDsM, reading.moisturePercent);
+  statusLight.handle(leachingPump.isLocked() ? Command(StatusLight::SHOW_ERROR_COMMAND_ID)
+                                             : levelCommand(reading.conductivityDsM));
+}
+
+void OsoSenseDevice::runLeaching(float conductivityDsM, float moisturePercent) {
+  leachingPump.evaluate(conductivityDsM, moisturePercent);
+  Serial.printf("Pump: %s | cycles %d/%d\n", leachingPump.stateName(), leachingPump.getCycles(), LEACHING_MAX_CYCLES);
 }
 
 // Same severities as the platform's SalinityAlert: WATCH < 1.2x, WARNING < 1.5x, CRITICAL >= 1.5x the crop threshold.

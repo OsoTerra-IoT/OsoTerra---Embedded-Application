@@ -15,6 +15,7 @@ The Wokwi circuit (`diagram.json`) uses the parts bought for the prototype on an
 | DS18B20 waterproof probe | GPIO 4 | 4.7 kΩ pull-up to 3.3 V |
 | RGB LED (common cathode) | GPIO 25 / 26 / 27 | 220 Ω per channel |
 | 2-pin push button | GPIO 14 | `INPUT_PULLUP`, to GND |
+| 5 V relay module (active-low) + mini water pump | GPIO 18 | Relay VCC/GND to VIN/GND, IN to GPIO 18; the pump runs on its own 4×AA pack through COM/NO. In Wokwi the relay uses `transistor: pnp` and a blue LED labeled BOMBA stands in for the pump |
 | Power | VIN / GND | 6 V solar panel → TP4056 with protection (USB-C) charging the 18650 → OUT+/OUT− to VIN/GND; the board's regulator gives 3.3 V to the rails |
 
 All the sensors run on 3.3 V from the rails, never 5 V: the ESP32 inputs are 3.3 V. On VIN the 18650 (3.0–4.2 V) is close to the dropout of the board's regulator, so below about 3.8 V the 3.3 V line sags; a low-dropout regulator such as the HT7333 between OUT+ and 3V3 fixes it.
@@ -29,7 +30,8 @@ The firmware follows the course's ModestIoT style: sensors notify the device wit
 | `SoilTemperatureSensor` | Sensor | DS18B20; emits `PROBE_DISCONNECTED_EVENT` and returns `NAN` when it does not answer. |
 | `StatusLight` | Actuator | RGB LED made of three framework `Led`s; one command per pattern of the IoT style guide. |
 | `EdgeServiceClient` | Support | `POST /api/v1/soil-readings` with `X-API-Key`; reads `compensatedConductivityDsM` and `status`. |
-| `OsoSenseDevice` | Device | Sampling cycle, button events and salinity level. |
+| `LeachingPump` | Actuator | Relay of the salt leaching pump: timed watering when the EC stays critical, with a cycle limit. |
+| `OsoSenseDevice` | Device | Sampling cycle, button events, salinity level and leaching pump. |
 
 ## Behavior
 - Takes a reading every `SAMPLE_INTERVAL_MS` (15 min in the field, 10 s in Wokwi) and on a **short press** of the button.
@@ -46,6 +48,16 @@ The firmware follows the course's ModestIoT style: sensors notify the device wit
 | — | Edge not reachable | white, long blink |
 | — | Rejected by the Edge (4xx) | magenta, fast blinks |
 
+### Salt leaching pump
+Proof of concept of the corrective action "lavado de sales": the device waters the plot on its own when the salinity stays critical, even when the Edge is down.
+
+- Starts when the EC reaches the **critical** level (`LEACHING_CRITICAL_RATIO` 1.5× the crop threshold) for `LEACHING_TRIGGER_READINGS` readings in a row (2 with the Edge, 5 on the bench).
+- Waters for `LEACHING_PUMP_MS` (5 s) at most, or until the EC drops, then waits `LEACHING_SOAK_MS` (30 s) for the water to mix before reading again.
+- Does not water when the moisture is already at `LEACHING_MAX_MOISTURE_PERCENT` (90 %).
+- After `LEACHING_MAX_CYCLES` (3) waterings without recovery it locks (magenta on the bench) until the EC drops below the critical level.
+- Each reading prints `Pump: IDLE | PUMPING | SOAKING | LOCKED | cycles n/3` on the serial monitor.
+- The 5 V relay module is active-low and 3.3 V does not release it, so the firmware floats GPIO 18 to turn it off and drives it LOW to turn it on.
+
 ## Configuration
 Edit `src/Config.h`: `DEVICE_CODE`, `DEVICE_API_KEY` (must match `EDGE_DEVICES` in the Edge Service), Wi-Fi, `EDGE_SERVICE_URL`, `SAMPLE_INTERVAL_MS` and `CROP_THRESHOLD_DSM`.
 
@@ -57,4 +69,10 @@ Edit `src/Config.h`: `DEVICE_CODE`, `DEVICE_API_KEY` (must match `EDGE_DEVICES` 
 ```bash
 pio run
 ```
-Then open the project with the Wokwi extension for VS Code (`wokwi.toml` points to the firmware, the custom chips and `diagram.json`). Move the sliders of the moisture and TDS chips and the DS18B20 temperature to change the readings. Run the Edge Service on port 5000 of the same PC: the simulator reaches it at `host.wokwi.internal`.
+Then open the project with the Wokwi extension for VS Code (`wokwi.toml` points to the firmware, the custom chips and `diagram.json`). Move the sliders of the moisture and TDS chips and the DS18B20 temperature to change the readings. Run the Edge Service on port 5000 of the same PC: the simulator reaches it at `host.wokwi.internal`. Raise the TDS slider above 1.65 dS/m with the moisture below 90 %: after two readings the relay switches and the BOMBA LED lights for 5 s.
+
+### Bench demo (real board over USB, no Wi-Fi)
+```bash
+pio run -e bench -t upload
+```
+Samples every 100 ms, computes the LED level on the device and drives the pump without the Edge Service; the moisture calibration uses the sensor mounted on the prototype.

@@ -112,6 +112,34 @@
       "top": -120,
       "left": 110,
       "attrs": {}
+    },
+    {
+      "type": "wokwi-relay-module",
+      "id": "relay",
+      "top": -105.6,
+      "left": 844.8,
+      "attrs": {
+        "transistor": "pnp"
+      }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r_pump",
+      "top": -140.05,
+      "left": 1008.0,
+      "attrs": {
+        "value": "220"
+      }
+    },
+    {
+      "type": "wokwi-led",
+      "id": "pump",
+      "top": -188.4,
+      "left": 1090.6,
+      "attrs": {
+        "color": "blue",
+        "label": "BOMBA"
+      }
     }
   ],
   "connections": [
@@ -429,6 +457,48 @@
         "v172.24",
         "h32.8"
       ]
+    ],
+    [
+      "esp:D18",
+      "relay:IN",
+      "violet",
+      []
+    ],
+    [
+      "esp:VIN",
+      "relay:VCC",
+      "red",
+      []
+    ],
+    [
+      "relay:GND",
+      "bb1:bn.45",
+      "black",
+      []
+    ],
+    [
+      "relay:COM",
+      "bb1:tp.48",
+      "red",
+      []
+    ],
+    [
+      "relay:NO",
+      "r_pump:1",
+      "green",
+      []
+    ],
+    [
+      "r_pump:2",
+      "pump:A",
+      "green",
+      []
+    ],
+    [
+      "pump:C",
+      "bb1:bn.47",
+      "black",
+      []
     ]
   ],
   "dependencies": {}

@@ -9,6 +9,8 @@
 class SoilTemperatureSensor : public Sensor {
   OneWire oneWire;
   DallasTemperature probe;
+  unsigned long requestedAt = 0;
+  float lastCelsius = NAN;
 
 public:
   static const int PROBE_DISCONNECTED_EVENT_ID = 20;
