@@ -10,7 +10,7 @@
 #define VOLTS_DRY 2.58f
 #define VOLTS_WET 1.05f
 
-// The PUMP pin listens to the relay signal (GPIO 13): while the pump runs the soil gets wetter (WET_PERCENT_PER_SECOND).
+// The PUMP pin listens to the relay signal (GPIO 18): while the pump runs the soil gets wetter (WET_PERCENT_PER_SECOND).
 // Moving the slider sets a new value and starts over.
 #define WET_PERCENT_PER_SECOND 2.5f
 #define TICK_SECONDS 0.01f

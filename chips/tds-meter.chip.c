@@ -10,7 +10,7 @@
 #define VOLTS_PER_DSM (3.3f / 3.2f)
 #define VOLTS_MAX 2.3f
 
-// The PUMP pin listens to the relay signal (GPIO 13). While the pump runs, the washed soil loses salt: the simulated
+// The PUMP pin listens to the relay signal (GPIO 18). While the pump runs, the washed soil loses salt: the simulated
 // extract drops WASH_DSM_PER_SECOND each second, so the contingency can be seen closing the loop. Moving the slider
 // sets a new value and starts over.
 #define WASH_DSM_PER_SECOND 0.03f

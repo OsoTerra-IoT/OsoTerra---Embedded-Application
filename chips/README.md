@@ -11,7 +11,7 @@ Wokwi has no capacitive soil moisture sensor, TDS / EC module or power parts, so
 | `battery-18650` | 18650 cell in its holder | +, − | Drawing only. |
 | `solar-panel-6v` | 6 V solar panel, 100 × 60 mm | +, − | Drawing only: Wokwi always powers the board. |
 
-**Wash model:** the `PUMP` pin of `tds-meter` and `soil-moisture-v12` listens to the relay signal (GPIO 13). While the pump runs, the EC falls 0.03 dS/m per second and the moisture rises 2.5 points per second; moving the slider starts over from the new value. This closes the loop of the contingency in the simulation.
+**Wash model:** the `PUMP` pin of `tds-meter` and `soil-moisture-v12` listens to the relay signal (GPIO 18). While the pump runs, the EC falls 0.03 dS/m per second and the moisture rises 2.5 points per second; moving the slider starts over from the new value. This closes the loop of the contingency in the simulation.
 
 Wokwi's ESP32 ADC maps 0–5 V to 0–4095, while the real board reads about 0–3.3 V. The two analog chips scale their output by 5 / 3.3 (`WOKWI_ADC_SCALE`), so the firmware reads the same raw ADC values as with the real sensors. Checked on wokwi.com: 0.80 dS/m and 38 % give `Raw ADC: conductivity 1024, moisture 2480` and `0.80 dS/m, 37.9 %`; holding the button 8 s and releasing it prints `Pairing mode`.
 
