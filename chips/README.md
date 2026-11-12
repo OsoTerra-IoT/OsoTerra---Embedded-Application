@@ -17,10 +17,12 @@ Wokwi's ESP32 ADC maps 0–5 V to 0–4095, while the real board reads about 0�
 
 ## Build
 
-wokwi.com compiles the `.chip.c` files by itself. The Wokwi extension for VS Code loads the `.chip.wasm` files listed in `wokwi.toml`. After changing a chip, rebuild them with zig (`pip install ziglang`):
+wokwi.com compiles the `.chip.c` files by itself. The Wokwi extension for VS Code and `wokwi-cli` load the `.chip.wasm` files listed in `wokwi.toml`. After changing a chip, rebuild them with [wokwi-cli](https://github.com/wokwi/wokwi-cli) (it downloads the WASI SDK the first time):
 
 ```bash
-for c in chips/*.chip.c; do python -m ziglang cc --target=wasm32-wasi -mexec-model=reactor -Oz -s -Wl,--import-memory -Wl,--export-table -Wl,--no-entry -o "${c%.c}.wasm" "$c"; done
+for c in chips/*.chip.c; do wokwi-cli chip compile "$c" -o "${c%.c}.wasm"; done
 ```
+
+Do not build them with zig's default flags: its 16 MB stack makes each chip ask for 257 memory pages and the simulator refuses to load more than 64 (`requires 257 memory pages, more than the 64 page limit`). The WASI SDK build uses 2 pages.
 
 `wokwi-api.h` is the chip API header from [wokwi/inverter-chip](https://github.com/wokwi/inverter-chip/blob/main/src/wokwi-api.h).
