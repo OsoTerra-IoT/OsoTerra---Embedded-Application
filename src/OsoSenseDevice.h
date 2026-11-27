@@ -9,6 +9,7 @@
 #include "FlushPump.h"
 #include "FlushPolicy.h"
 #include "EdgeServiceClient.h"
+#include <math.h>
 
 // OsoSense field device: samples the soil, sends the reading to the Edge Service and shows the salinity level.
 class OsoSenseDevice : public Device {
@@ -25,11 +26,16 @@ class OsoSenseDevice : public Device {
   unsigned long sampleIntervalMs;
   unsigned long lastSampleAt = 0;
   bool firstSample = true;
+  float simulatedDsM = NAN;  // demo without salt: EC that replaces the probe's; NAN when the demo is off
+  unsigned long simulationStartedAt = 0;
 
   SoilReading takeReading();
+  bool simulating() const { return !isnan(simulatedDsM); }
+  void toggleSimulation();
   Command levelCommand(float conductivityDsM) const;
   void applyContingency(float conductivityDsM, float moisturePercent);
   const char *pumpStateName() const;
+  void printPumpState() const;
 
 public:
   static const int TAKE_READING_COMMAND_ID = 200;

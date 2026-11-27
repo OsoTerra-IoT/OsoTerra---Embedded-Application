@@ -29,11 +29,33 @@ void OsoSenseDevice::begin() {
 
 void OsoSenseDevice::update() {
   button.update();
+  if (Serial.available()) {
+    int key = Serial.read();
+    if (key == 's' || key == 'S') toggleSimulation();
+  }
+  if (simulating() && millis() - simulationStartedAt >= SIMULATION_MS) toggleSimulation();
   if (pump.update(millis())) {
     flushPolicy.flushFinished(millis());
     Serial.println("Contingency: wash finished, pump off. Waiting for the soil to drain before measuring again");
+    if (simulating()) {
+      simulatedDsM *= SIMULATED_WASH_DILUTION;
+      Serial.printf("SIMULATION: the wash diluted the sample, EC %.2f dS/m\n", simulatedDsM);
+    }
   }
   if (firstSample || millis() - lastSampleAt >= sampleIntervalMs) handle(TAKE_READING_COMMAND);
+}
+
+// Demo without salt (key S in the live panel): on, the probe reads a salty sample; off, the real probe again.
+void OsoSenseDevice::toggleSimulation() {
+  if (simulating()) {
+    simulatedDsM = NAN;
+    Serial.println("SIMULATION off: back to the real probe");
+  } else {
+    simulatedDsM = SIMULATED_SALTY_DSM;
+    simulationStartedAt = millis();
+    Serial.printf("SIMULATION on: salty sample %.2f dS/m for %lu s\n", simulatedDsM, SIMULATION_MS / 1000UL);
+  }
+  handle(TAKE_READING_COMMAND);  // show the change right away
 }
 
 void OsoSenseDevice::on(Event event) {
@@ -48,27 +70,43 @@ void OsoSenseDevice::handle(Command command) {
     firstSample = false;
     lastSampleAt = millis();
     SoilReading reading = takeReading();
+    if (simulating()) {
+      reading.conductivityDsM = simulatedDsM;
+      Serial.printf("SIMULATION: EC %.2f dS/m (salty sample, not sent to the Edge)\n", simulatedDsM);
+    }
 #if OFFLINE_MODE
     if (isnan(reading.temperatureCelsius)) Serial.printf("Humedad: %.1f %% | Conductividad: %.2f dS/m | Temp: --\n", reading.moisturePercent, reading.conductivityDsM);
     else Serial.printf("Humedad: %.1f %% | Conductividad: %.2f dS/m | Temp: %.1f C\n", reading.moisturePercent, reading.conductivityDsM, reading.temperatureCelsius);
     statusLight.flash(levelCommand(reading.conductivityDsM));
     applyContingency(reading.conductivityDsM, reading.moisturePercent);
-    Serial.printf("Pump: %s | cycles %d/%d\n", pumpStateName(), flushPolicy.getCycles(), flushPolicy.getMaxCycles());
+    printPumpState();
     return;
 #endif
+    if (simulating()) {  // invented readings stay on the device: the LED and the washing react, the Edge never sees them
+      statusLight.handle(levelCommand(reading.conductivityDsM));
+      applyContingency(reading.conductivityDsM, reading.moisturePercent);
+      printPumpState();
+      return;
+    }
     Serial.println("Reading: " + edgeClient.toJson(reading));
 
     EdgeResponse response = edgeClient.send(reading);
     if (!response.reached()) {
-      Serial.println("Edge Service not reachable");
+      Serial.printf("Edge Service not reachable (HTTP client error %d)\n", response.httpStatus);
       statusLight.handle(Command(StatusLight::SHOW_OFFLINE_COMMAND_ID));
       applyContingency(reading.conductivityDsM, reading.moisturePercent);  // the washing does not depend on the Edge
+      printPumpState();
       return;
     }
-    Serial.printf("Edge Service answered %d (%s)\n", response.httpStatus, response.status.c_str());
+    if (isnan(response.compensatedConductivityDsM))
+      Serial.printf("Edge Service answered %d (%s), EC at 25 C: --\n", response.httpStatus, response.status.c_str());
+    else
+      Serial.printf("Edge Service answered %d (%s), EC at 25 C: %.2f dS/m\n", response.httpStatus,
+                    response.status.c_str(), response.compensatedConductivityDsM);
     if (response.httpStatus >= 400) {
       statusLight.handle(Command(StatusLight::SHOW_ERROR_COMMAND_ID));
       applyContingency(reading.conductivityDsM, reading.moisturePercent);
+      printPumpState();
       return;
     }
     // The level uses the EC compensated to 25 °C by the Edge; the raw value only if it could not compensate.
@@ -76,6 +114,7 @@ void OsoSenseDevice::handle(Command command) {
                                                                     : response.compensatedConductivityDsM;
     statusLight.handle(levelCommand(conductivity));
     applyContingency(conductivity, reading.moisturePercent);
+    printPumpState();
   } else if (command == START_PAIRING_COMMAND) {
     Serial.printf("Pairing mode: register %s in the OsoSense app\n", DEVICE_CODE);
     statusLight.handle(Command(StatusLight::SHOW_PAIRING_COMMAND_ID));
@@ -130,4 +169,9 @@ const char *OsoSenseDevice::pumpStateName() const {
     case FlushPolicy::SOIL_SATURATED: return "SATURATED";
     default: return "IDLE";
   }
+}
+
+// One status line per reading in every mode, so the live panel on the USB also shows the pump over Wi-Fi.
+void OsoSenseDevice::printPumpState() const {
+  Serial.printf("Pump: %s | cycles %d/%d\n", pumpStateName(), flushPolicy.getCycles(), flushPolicy.getMaxCycles());
 }

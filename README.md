@@ -68,11 +68,18 @@ It works with or without the Edge Service (it uses the raw EC when the Edge does
 ## Configuration
 Edit `src/Config.h`: `DEVICE_CODE`, `DEVICE_API_KEY` (must match `EDGE_DEVICES` in the Edge Service), Wi-Fi, `EDGE_SERVICE_URL`, `SAMPLE_INTERVAL_MS`, `CROP_THRESHOLD_DSM` and the contingency values. `OFFLINE_MODE 1` is a bench test over USB (no Wi-Fi, no Edge, readings and contingency on the serial monitor).
 
+### Real prototype with the Edge Service
+Copy `src/Secrets.example.h` to `src/Secrets.h` (git ignores it), set the plot's 2.4 GHz Wi-Fi and the IP of the PC running the Edge Service, start the Edge with `EDGE_HOST=0.0.0.0` so the board can reach it on the network, and upload:
+```bash
+pio run -e board -t upload
+```
+The `board` environment sets `REAL_BOARD 1`: the prototype's moisture calibration and its active-low relay, with the Edge flow and the simulation timings. If the Wi-Fi drops, the device asks to reconnect every `WIFI_RETRY_MS` (10 s) and keeps measuring and running the contingency meanwhile.
+
 ### Bench demo on the real prototype
 ```bash
 pio run -e bench -t upload
 ```
-The `bench` environment sets `OFFLINE_MODE 1` and `PUMP_RELAY_ACTIVE_LOW 1`: it samples every 100 ms, uses the moisture calibration of the sensor mounted on the prototype, washes for 5 s with 30 s to mix and prints `Pump: IDLE | PUMPING | SOAKING | LOCKED | SATURATED | cycles n/3` on each reading.
+The `bench` environment sets `REAL_BOARD 1` and `OFFLINE_MODE 1`: it samples every 100 ms, uses the moisture calibration of the sensor mounted on the prototype, washes for 5 s with 30 s to mix and prints `Pump: IDLE | PUMPING | SOAKING | LOCKED | SATURATED | cycles n/3` on each reading.
 
 ### Real board
 - `WIFI_CHANNEL 0` scans every channel; the ESP32 only joins 2.4 GHz networks.
