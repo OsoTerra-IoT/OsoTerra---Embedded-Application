@@ -5,14 +5,31 @@
 #define DEVICE_CODE "OS-014"
 #define DEVICE_API_KEY "os-014-device-key"
 
+// 1 = the real prototype (envs board and bench): its moisture calibration and its active-low relay.
+#ifndef REAL_BOARD
+#define REAL_BOARD 0
+#endif
+
+// The board build reads the plot's Wi-Fi and the gateway address from src/Secrets.h, which git ignores
+// (copy src/Secrets.example.h). Wokwi keeps the defaults below.
+#if REAL_BOARD && __has_include("Secrets.h")
+#include "Secrets.h"
+#endif
+
 // Wokwi-GUEST is the simulator's open network; in the field use the plot's 2.4 GHz Wi-Fi.
+#ifndef WIFI_SSID
 #define WIFI_SSID "Wokwi-GUEST"
 #define WIFI_PASSWORD ""
+#endif
 // 0 scans every channel, so it works with any router and in Wokwi (6 only skips the scan in the simulator).
 #define WIFI_CHANNEL 0
 
 // Edge Service on the local gateway. In Wokwi, host.wokwi.internal reaches the PC running the simulation.
+#ifndef EDGE_SERVICE_URL
 #define EDGE_SERVICE_URL "http://host.wokwi.internal:5000/api/v1/soil-readings"
+#endif
+// While the Wi-Fi is down, ask the radio to reconnect at most this often.
+#define WIFI_RETRY_MS 10000UL
 
 // 1 = bench test over USB on the real prototype (env bench): no Wi-Fi and no Edge Service, fast sampling,
 // readings and contingency on the serial monitor. 0 = Edge Service flow and Wokwi (env esp32dev).
@@ -45,8 +62,8 @@
 // Moisture calibration: raw ADC of the capacitive sensor in dry air (0 %) and in water up to its line (100 %).
 // The v1.2 sensor is inverse (more water, lower reading); read both values from the serial monitor and set them here.
 // In Wokwi the potentiometer then reads 100 % at the left end and 0 % at the right end.
-// The bench values belong to the sensor mounted on the prototype; the others match the Wokwi chip.
-#if OFFLINE_MODE
+// The real board values belong to the sensor mounted on the prototype; the others match the Wokwi chip.
+#if REAL_BOARD
 #define MOISTURE_RAW_DRY 3749
 #define MOISTURE_RAW_WET 1534
 #else
@@ -61,9 +78,9 @@
 // 1 = enabled. Without the relay connected the device works the same and only logs the decision.
 #define CONTINGENCY_ENABLED 1
 // 1 for the usual blue 1-channel relay modules (they switch when IN goes LOW, like the prototype's); 0 for active-high
-// modules and Wokwi's (its sensor chips read a HIGH relay signal as the pump running). The bench build sets 1.
+// modules and Wokwi's (its sensor chips read a HIGH relay signal as the pump running).
 #ifndef PUMP_RELAY_ACTIVE_LOW
-#define PUMP_RELAY_ACTIVE_LOW 0
+#define PUMP_RELAY_ACTIVE_LOW REAL_BOARD
 #endif
 #if OFFLINE_MODE
 // Bench demo with the prototype: 5 s washes, 30 s to mix the water, 5 readings (0.5 s) to confirm.
@@ -82,5 +99,12 @@
 #define FLUSH_MAX_CYCLES 3
 // Never wash a soil that is already this wet (%): it would waterlog the plant.
 #define FLUSH_SATURATED_PERCENT 90.0f
+
+// Demo without salt: sending 's' over the USB (key S in the live panel) makes the device read a salty sample.
+// Each wash dilutes it like the real sampling well, so the demo shows Critical -> wash -> wait -> wash -> Warning.
+// Simulated readings are not sent to the Edge Service, so no invented data reaches the platform.
+#define SIMULATED_SALTY_DSM 2.2f
+#define SIMULATED_WASH_DILUTION 0.78f
+#define SIMULATION_MS 120000UL
 
 #endif
